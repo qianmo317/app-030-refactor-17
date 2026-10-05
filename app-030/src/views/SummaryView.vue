@@ -5,7 +5,7 @@ import { ensureMerged, getProject, getRule, store } from '../logic/store'
 import { buildSummary, conservationText } from '../logic/merge'
 import { exportBaseName, stockAdviceRows, summaryRowLabel } from '../logic/exporter'
 import { downloadText, toCsvText } from '../logic/csv'
-import type { Gender } from '../logic/types'
+import { genderLabel } from '../logic/presentation'
 
 const route = useRoute()
 const project = computed(() => getProject(route.params.id as string))
@@ -25,8 +25,6 @@ function toggleUnit(orgUnit: string): void {
     expandedUnits.value = [...expandedUnits.value, orgUnit]
   }
 }
-
-const genderText = (gender: Gender | string): string => (gender === 'male' ? '男' : '女')
 
 const totalQty = computed(() => summary.value?.totals.accountedQty ?? 0)
 
@@ -159,7 +157,7 @@ function exportStockAdvice(): void {
           <tbody>
             <tr v-for="row in visibleRows" :key="`${row.isSpecial}-${row.sizeCode}-${row.gender}`">
               <td><b>{{ summaryRowLabel(rule, row) }}</b></td>
-              <td>{{ genderText(row.gender) }}</td>
+              <td>{{ genderLabel(row.gender) }}</td>
               <td>
                 <span class="badge" :class="row.isSpecial ? 'badge-warn' : 'badge-info'">
                   {{ row.isSpecial ? '特殊单列' : '常规档' }}
@@ -214,7 +212,7 @@ function exportStockAdvice(): void {
                 <td colspan="7">
                   <div class="pill-list">
                     <span v-for="row in group.rows" :key="`${row.sizeCode}-${row.gender}`" class="badge">
-                      {{ summaryRowLabel(rule, row) }} / {{ genderText(row.gender) }}：{{ row.qty }}
+                      {{ summaryRowLabel(rule, row) }} / {{ genderLabel(row.gender) }}：{{ row.qty }}
                     </span>
                   </div>
                 </td>
@@ -288,7 +286,7 @@ function exportStockAdvice(): void {
             <tr v-for="(row, index) in summary.distribution" :key="`${row.sizeCode}-${row.gender}-${index}`">
               <td class="num">{{ index + 1 }}</td>
               <td>{{ summaryRowLabel(rule, row) }}</td>
-              <td>{{ genderText(row.gender) }}</td>
+              <td>{{ genderLabel(row.gender) }}</td>
               <td class="num">{{ row.qty }}</td>
               <td class="num">{{ (row.ratio * 100).toFixed(1) }}%</td>
               <td class="num">{{ Math.round((1 + row.marginRatio) * 100) }}%</td>

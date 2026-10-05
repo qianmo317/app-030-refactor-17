@@ -18,6 +18,7 @@ import {
 import { downloadBlob, downloadText, toCsvText } from '../logic/csv'
 import { buildXlsxBlob } from '../logic/xlsx'
 import { chestWaistDiffCm, formatCm } from '../logic/precision'
+import { genderLabel } from '../logic/presentation'
 
 const route = useRoute()
 const project = computed(() => getProject(route.params.id as string))
@@ -117,7 +118,6 @@ async function printPreview(): Promise<void> {
   window.print()
 }
 
-const genderText = (gender: string): string => (gender === 'male' ? '男' : '女')
 </script>
 
 <template>
@@ -297,7 +297,7 @@ const genderText = (gender: string): string => (gender === 'male' ? '男' : '女
             <tr v-for="person in project.persons.filter((item) => item.specialFlag)" :key="person.id">
               <td class="num">{{ person.sourceRow ?? '—' }}</td>
               <td>{{ person.name }}</td>
-              <td>{{ genderText(person.gender) }}</td>
+              <td>{{ genderLabel(person.gender) }}</td>
               <td>{{ person.orgUnit || '—' }}</td>
               <td class="num">{{ formatCm(person.heightCm) }}</td>
               <td class="num">{{ formatCm(person.chestCm) }}</td>
@@ -340,7 +340,7 @@ const genderText = (gender: string): string => (gender === 'male' ? '男' : '女
             <tr v-for="person in project.persons.slice(0, 30)" :key="person.id">
               <td class="num">{{ person.sourceRow ?? '—' }}</td>
               <td>{{ person.name }}</td>
-              <td>{{ genderText(person.gender) }}</td>
+              <td>{{ genderLabel(person.gender) }}</td>
               <td>{{ person.orgUnit || '—' }}</td>
               <td class="num">{{ formatCm(person.heightCm) }}</td>
               <td class="num">{{ formatCm(person.chestCm) }}</td>

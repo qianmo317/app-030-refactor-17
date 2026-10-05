@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { getRule, projectsUsingRule, saveRule, store } from '../logic/store'
-import { alignToStep } from '../logic/sizeRules'
-import { cmToHalfUnits, formatHalfUnits } from '../logic/precision'
+import { describeAlign, fitRangeText } from '../logic/sizeRules'
 import type { FitRange, Gender, SizeRule } from '../logic/types'
 
 function cloneRule(rule: SizeRule): SizeRule {
@@ -40,20 +39,16 @@ function rangesOf(gender: Gender): FitRange[] {
 const alignExamples = computed(() => {
   const rule = form.value
   const samples = [167, 167.5, 168, 182, 182.5, 183]
-  return samples.map((cm) => {
-    const height = formatHalfUnits(
-      alignToStep(cmToHalfUnits(cm), cmToHalfUnits(rule.heightAnchor), cmToHalfUnits(rule.heightStepCm), rule.boundaryRule)
-    )
-    const chest = formatHalfUnits(
-      alignToStep(cmToHalfUnits(86), cmToHalfUnits(rule.chestAnchor), cmToHalfUnits(rule.chestStepCm), rule.boundaryRule)
-    )
-    return { cm, height, chest }
-  })
+  return samples.map((cm) => ({
+    cm,
+    height: describeAlign(rule, cm, 'height'),
+    chest: describeAlign(rule, 86, 'chest')
+  }))
 })
 
 function fitText(gender: Gender): string {
   return rangesOf(gender)
-    .map((range) => `${range.fit} ${range.minCm}~${range.maxCm}`)
+    .map((range) => fitRangeText(range))
     .join(' ｜ ')
 }
 

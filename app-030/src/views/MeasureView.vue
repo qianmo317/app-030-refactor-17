@@ -8,6 +8,7 @@ import { formatCm, parseLengthCm, parseWeightKg } from '../logic/precision'
 import { downloadText, toCsvText } from '../logic/csv'
 import { runMerge } from '../logic/merge'
 import { detailRows } from '../logic/exporter'
+import { genderLabel } from '../logic/presentation'
 import type { Gender, Person } from '../logic/types'
 
 const route = useRoute()
@@ -209,9 +210,6 @@ function focusHeight(): void {
   heightRef.value?.focus()
 }
 
-function genderText(gender: Gender): string {
-  return gender === 'male' ? '男' : '女'
-}
 </script>
 
 <template>
@@ -398,7 +396,7 @@ function genderText(gender: Gender): string {
             <tbody>
               <tr v-for="person in recent" :key="person.id" :class="person.status === 'active' ? '' : 'row-invalid'">
                 <td>{{ person.name }}</td>
-                <td>{{ genderText(person.gender) }}</td>
+                <td>{{ genderLabel(person.gender) }}</td>
                 <td class="num">{{ formatCm(person.heightCm) }}</td>
                 <td class="num">{{ formatCm(person.chestCm) }}</td>
                 <td class="num">{{ formatCm(person.waistCm) }}</td>

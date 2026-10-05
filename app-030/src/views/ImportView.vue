@@ -17,6 +17,7 @@ import {
 } from '../logic/importPlan'
 import { fnv1a, parseDelimitedText, readFileAsText, downloadText, toCsvText } from '../logic/csv'
 import { isXlsxFile, readXlsxRows } from '../logic/xlsx'
+import { genderLabelOr } from '../logic/presentation'
 
 const route = useRoute()
 const project = computed(() => getProject(route.params.id as string))
@@ -393,7 +394,7 @@ function formatSize(bytes: number): string {
                   <span v-if="row.duplicateOf" class="badge badge-warn" style="margin-left: 4px">可能重复</span>
                 </td>
                 <td>{{ row.draft ? row.draft.name : row.raw[0] }}</td>
-                <td>{{ row.draft?.gender === 'male' ? '男' : row.draft?.gender === 'female' ? '女' : '—' }}</td>
+                <td>{{ genderLabelOr(row.draft?.gender) }}</td>
                 <td>{{ row.draft?.orgUnit || '—' }}</td>
                 <td class="num">{{ row.draft?.heightCm ?? '—' }}</td>
                 <td class="num">{{ row.draft?.chestCm ?? '—' }}</td>

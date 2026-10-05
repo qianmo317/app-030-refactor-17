@@ -5,6 +5,7 @@ import { ensureMerged, flushProject, getProject, getRule, persistProject, store 
 import { buildSummary, conservationText } from '../logic/merge'
 import { alignToStep, isSizeCodeValid, normalizeSizeCodeInput, specialFlagLabel } from '../logic/sizeRules'
 import { chestWaistDiffCm, cmToHalfUnits, formatCm, formatHalfUnits } from '../logic/precision'
+import { genderLabel } from '../logic/presentation'
 import type { Person, PersonStatus } from '../logic/types'
 
 const route = useRoute()
@@ -260,7 +261,6 @@ async function clearDuplicateFlag(person: Person): Promise<void> {
   message.value = `已确认「${person.name}」不是重复行，标记已清除（数据未改动）`
 }
 
-const genderText = (gender: string): string => (gender === 'male' ? '男' : '女')
 const rowLabel = (sizeCode: string, isSpecial: boolean): string =>
   isSpecial ? `${specialFlagLabel(rule.value, sizeCode)}（${sizeCode}）` : sizeCode
 </script>
@@ -445,7 +445,7 @@ const rowLabel = (sizeCode: string, isSpecial: boolean): string =>
             <tbody>
               <tr v-for="person in specialPersons" :key="person.id">
                 <td>{{ person.name }}</td>
-                <td>{{ genderText(person.gender) }}</td>
+                <td>{{ genderLabel(person.gender) }}</td>
                 <td>{{ person.orgUnit || '—' }}</td>
                 <td><span class="badge badge-warn">{{ specialFlagLabel(rule, person.specialFlag) }}</span></td>
                 <td>{{ person.result?.sizeCode || '规则未覆盖' }}</td>
@@ -536,7 +536,7 @@ const rowLabel = (sizeCode: string, isSpecial: boolean): string =>
             <template v-for="row in summary.allRows" :key="`${row.isSpecial}-${row.sizeCode}-${row.gender}`">
               <tr>
                 <td><b>{{ rowLabel(row.sizeCode, row.isSpecial) }}</b></td>
-                <td>{{ genderText(row.gender) }}</td>
+                <td>{{ genderLabel(row.gender) }}</td>
                 <td>
                   <span class="badge" :class="row.isSpecial ? 'badge-warn' : 'badge-info'">
                     {{ row.isSpecial ? '特殊单列' : '常规档' }}
@@ -617,7 +617,7 @@ const rowLabel = (sizeCode: string, isSpecial: boolean): string =>
             >
               <td class="num">{{ person.sourceRow ?? '—' }}</td>
               <td>{{ person.name }}</td>
-              <td>{{ genderText(person.gender) }}</td>
+              <td>{{ genderLabel(person.gender) }}</td>
               <td>{{ person.orgUnit || '—' }}</td>
               <td class="num">{{ formatCm(person.heightCm) }}</td>
               <td class="num">{{ formatCm(person.chestCm) }}</td>

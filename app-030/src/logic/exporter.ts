@@ -2,10 +2,11 @@
  * 导出：下单汇总表 / 量体明细 / 特殊体型清单 / 备货建议。
  * 页面预览、CSV、XLSX 与打印预览共用同一份数据，保证逐行一致。
  */
-import type { Gender, Person, Project, SizeRule, SummaryRow } from './types'
+import type { Person, Project, SizeRule, SummaryRow } from './types'
 import { specialFlagLabel } from './sizeRules'
 import { conservationText, type Summary } from './merge'
 import { chestWaistDiffCm, formatCm } from './precision'
+import { genderLabel, localDateTimeStamp } from './presentation'
 import type { Sheet } from './xlsx'
 
 export type BaseContext = {
@@ -19,10 +20,6 @@ export type ExportContext = BaseContext & {
   generatedAt: Date
 }
 
-export function genderLabel(gender: Gender): string {
-  return gender === 'male' ? '男' : '女'
-}
-
 export function personStatusLabel(person: Person): string {
   if (person.status === 'invalid') return '无效行'
   if (person.status === 'duplicate') return '重复行（已排除）'
@@ -33,16 +30,9 @@ export function summaryRowLabel(rule: SizeRule, row: SummaryRow): string {
   return row.isSpecial ? `${specialFlagLabel(rule, row.sizeCode)}（${row.sizeCode}）` : row.sizeCode
 }
 
-function stamp(date: Date): string {
-  const pad = (value: number) => String(value).padStart(2, '0')
-  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(
-    date.getMinutes()
-  )}`
-}
-
 export function exportBaseName(ctx: ExportContext, suffix: string, ext: string): string {
   const safeName = ctx.project.name.replace(/[\\/:*?"<>|\s]/g, '_').slice(0, 40)
-  return `${safeName}-${suffix}-${stamp(ctx.generatedAt)}.${ext}`
+  return `${safeName}-${suffix}-${localDateTimeStamp(ctx.generatedAt)}.${ext}`
 }
 
 /* ------------------------------- 下单汇总表 ------------------------------- */

@@ -6,6 +6,7 @@ import { computed, reactive, toRaw } from 'vue'
 import type { Project, ProjectKind, SizeRule } from './types'
 import { BUILTIN_RULES, DEFAULT_RULE_VERSION, ruleByVersion } from './sizeRules'
 import { runMerge } from './merge'
+import { compareProjectsByUpdatedAt, compareRulesByVersion, stableSort } from './sort'
 import {
   STORE_META,
   STORE_PROJECTS,
@@ -37,7 +38,7 @@ export const ruleVersions = computed(() => store.rules.map((rule) => rule.versio
 const persistTimers = new Map<string, number>()
 
 function sortProjects(): void {
-  store.projects.sort((a, b) => b.updatedAt - a.updatedAt)
+  store.projects = stableSort(store.projects, compareProjectsByUpdatedAt)
 }
 
 export async function initStore(): Promise<void> {
@@ -48,11 +49,7 @@ export async function initStore(): Promise<void> {
       idbGetAll<MetaEntry>(STORE_META)
     ])
     const customRules = rules.filter((rule) => !rule.builtin)
-    store.rules = [...BUILTIN_RULES, ...customRules].sort((a, b) =>
-      a.effectiveFrom === b.effectiveFrom
-        ? a.version.localeCompare(b.version)
-        : a.effectiveFrom.localeCompare(b.effectiveFrom)
-    )
+    store.rules = stableSort([...BUILTIN_RULES, ...customRules], compareRulesByVersion)
     const missingBuiltin = BUILTIN_RULES.filter(
       (builtin) => !rules.some((rule) => rule.version === builtin.version)
     )
@@ -166,11 +163,7 @@ export async function saveRule(rule: SizeRule): Promise<void> {
   const index = store.rules.findIndex((item) => item.version === rule.version)
   if (index >= 0) store.rules[index] = rule
   else store.rules.push(rule)
-  store.rules.sort((a, b) =>
-    a.effectiveFrom === b.effectiveFrom
-      ? a.version.localeCompare(b.version)
-      : a.effectiveFrom.localeCompare(b.effectiveFrom)
-  )
+  store.rules = stableSort(store.rules, compareRulesByVersion)
   await idbPut(STORE_RULES, toRaw(rule))
 }
 

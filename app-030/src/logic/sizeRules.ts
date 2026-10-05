@@ -121,11 +121,3 @@ export function describeAlign(rule: SizeRule, cm: number, kind: 'height' | 'ches
   const units = kind === 'height' ? heightCodeUnits(rule, cm) : chestCodeUnits(rule, cm)
   return `${formatHalfUnits(units)}`
 }
-
-/** 号码档位可对齐的候选值（用于 UI 说明与覆写建议） */
-export function stepCandidates(anchor: number, step: number, min: number, max: number): number[] {
-  const list: number[] = []
-  for (let value = anchor; value <= max; value += step) if (value >= min) list.push(value)
-  for (let value = anchor - step; value >= min; value -= step) list.unshift(value)
-  return list.map((value) => Math.round(value * 10) / 10)
-}
