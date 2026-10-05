@@ -2,10 +2,11 @@
  * 全局响应式状态（Vue 自带 reactive / computed，不引入 Pinia）+ IndexedDB 持久化。
  * 数据只写在本机浏览器，没有任何服务端请求。
  */
-import { computed, reactive, toRaw } from 'vue'
+import { reactive, toRaw } from 'vue'
 import type { Project, ProjectKind, SizeRule } from './types'
 import { BUILTIN_RULES, DEFAULT_RULE_VERSION, ruleByVersion } from './sizeRules'
 import { runMerge } from './merge'
+import { compareProjectsByUpdated, compareRules } from './sort'
 import {
   STORE_META,
   STORE_PROJECTS,
@@ -13,6 +14,7 @@ import {
   idbDelete,
   idbGetAll,
   idbPut,
+  idbPutMany,
   type MetaEntry
 } from './idb'
 
@@ -32,12 +34,10 @@ export const store = reactive<AppStore>({
   operator: '现场录入员'
 })
 
-export const ruleVersions = computed(() => store.rules.map((rule) => rule.version))
-
 const persistTimers = new Map<string, number>()
 
 function sortProjects(): void {
-  store.projects.sort((a, b) => b.updatedAt - a.updatedAt)
+  store.projects.sort(compareProjectsByUpdated)
 }
 
 export async function initStore(): Promise<void> {
@@ -48,17 +48,11 @@ export async function initStore(): Promise<void> {
       idbGetAll<MetaEntry>(STORE_META)
     ])
     const customRules = rules.filter((rule) => !rule.builtin)
-    store.rules = [...BUILTIN_RULES, ...customRules].sort((a, b) =>
-      a.effectiveFrom === b.effectiveFrom
-        ? a.version.localeCompare(b.version)
-        : a.effectiveFrom.localeCompare(b.effectiveFrom)
-    )
+    store.rules = [...BUILTIN_RULES, ...customRules].sort(compareRules)
     const missingBuiltin = BUILTIN_RULES.filter(
       (builtin) => !rules.some((rule) => rule.version === builtin.version)
     )
-    if (missingBuiltin.length > 0) {
-      for (const rule of missingBuiltin) await idbPut(STORE_RULES, rule)
-    }
+    if (missingBuiltin.length > 0) await idbPutMany(STORE_RULES, missingBuiltin)
     store.projects = projects
     sortProjects()
     const operator = meta.find((entry) => entry.key === 'operator')
@@ -166,11 +160,7 @@ export async function saveRule(rule: SizeRule): Promise<void> {
   const index = store.rules.findIndex((item) => item.version === rule.version)
   if (index >= 0) store.rules[index] = rule
   else store.rules.push(rule)
-  store.rules.sort((a, b) =>
-    a.effectiveFrom === b.effectiveFrom
-      ? a.version.localeCompare(b.version)
-      : a.effectiveFrom.localeCompare(b.effectiveFrom)
-  )
+  store.rules.sort(compareRules)
   await idbPut(STORE_RULES, toRaw(rule))
 }
 

@@ -57,10 +57,6 @@ export function idbGetAll<T>(storeName: string): Promise<T[]> {
   return runRequest<T[]>(storeName, 'readonly', (store) => store.getAll())
 }
 
-export function idbGet<T>(storeName: string, key: string): Promise<T | undefined> {
-  return runRequest<T | undefined>(storeName, 'readonly', (store) => store.get(key))
-}
-
 export function idbPut<T>(storeName: string, value: T): Promise<void> {
   return runRequest<void>(storeName, 'readwrite', (store) => store.put(value))
 }

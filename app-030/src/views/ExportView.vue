@@ -18,6 +18,7 @@ import {
 import { downloadBlob, downloadText, toCsvText } from '../logic/csv'
 import { buildXlsxBlob } from '../logic/xlsx'
 import { chestWaistDiffCm, formatCm } from '../logic/precision'
+import { genderText } from '../logic/display'
 
 const route = useRoute()
 const project = computed(() => getProject(route.params.id as string))
@@ -116,8 +117,6 @@ async function printPreview(): Promise<void> {
   if (blocked.value || !(await prepare())) return
   window.print()
 }
-
-const genderText = (gender: string): string => (gender === 'male' ? '男' : '女')
 </script>
 
 <template>

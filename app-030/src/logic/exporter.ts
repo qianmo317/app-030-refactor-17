@@ -2,10 +2,11 @@
  * 导出：下单汇总表 / 量体明细 / 特殊体型清单 / 备货建议。
  * 页面预览、CSV、XLSX 与打印预览共用同一份数据，保证逐行一致。
  */
-import type { Gender, Person, Project, SizeRule, SummaryRow } from './types'
+import type { Person, Project, SizeRule, SummaryRow } from './types'
 import { specialFlagLabel } from './sizeRules'
 import { conservationText, type Summary } from './merge'
 import { chestWaistDiffCm, formatCm } from './precision'
+import { fileStamp, genderText } from './display'
 import type { Sheet } from './xlsx'
 
 export type BaseContext = {
@@ -19,10 +20,6 @@ export type ExportContext = BaseContext & {
   generatedAt: Date
 }
 
-export function genderLabel(gender: Gender): string {
-  return gender === 'male' ? '男' : '女'
-}
-
 export function personStatusLabel(person: Person): string {
   if (person.status === 'invalid') return '无效行'
   if (person.status === 'duplicate') return '重复行（已排除）'
@@ -33,16 +30,9 @@ export function summaryRowLabel(rule: SizeRule, row: SummaryRow): string {
   return row.isSpecial ? `${specialFlagLabel(rule, row.sizeCode)}（${row.sizeCode}）` : row.sizeCode
 }
 
-function stamp(date: Date): string {
-  const pad = (value: number) => String(value).padStart(2, '0')
-  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(
-    date.getMinutes()
-  )}`
-}
-
 export function exportBaseName(ctx: ExportContext, suffix: string, ext: string): string {
   const safeName = ctx.project.name.replace(/[\\/:*?"<>|\s]/g, '_').slice(0, 40)
-  return `${safeName}-${suffix}-${stamp(ctx.generatedAt)}.${ext}`
+  return `${safeName}-${suffix}-${fileStamp(ctx.generatedAt)}.${ext}`
 }
 
 /* ------------------------------- 下单汇总表 ------------------------------- */
@@ -68,7 +58,7 @@ export function buildOrderSheet(ctx: ExportContext): OrderSheet {
   const items: OrderSheetItem[] = summary.allRows.map((row, index) => ({
     index: index + 1,
     sizeLabel: summaryRowLabel(rule, row),
-    gender: genderLabel(row.gender),
+    gender: genderText(row.gender),
     kind: row.isSpecial ? '特殊单列' : '常规档',
     qty: row.qty
   }))
@@ -77,7 +67,7 @@ export function buildOrderSheet(ctx: ExportContext): OrderSheet {
     rows: group.rows.map((row, index) => ({
       index: index + 1,
       sizeLabel: summaryRowLabel(rule, row),
-      gender: genderLabel(row.gender),
+      gender: genderText(row.gender),
       kind: row.isSpecial ? ('特殊单列' as const) : ('常规档' as const),
       qty: row.qty
     })),
@@ -152,7 +142,7 @@ export function detailRows(ctx: BaseContext): (string | number)[][] {
     rows.push([
       person.sourceRow ?? '',
       person.name,
-      genderLabel(person.gender),
+      genderText(person.gender),
       person.orgUnit,
       person.batch,
       person.heightCm > 0 ? formatCm(person.heightCm) : '',
@@ -199,7 +189,7 @@ export function specialRows(ctx: BaseContext): (string | number)[][] {
     rows.push([
       person.sourceRow ?? '',
       person.name,
-      genderLabel(person.gender),
+      genderText(person.gender),
       person.orgUnit,
       person.batch,
       formatCm(person.heightCm),
@@ -226,7 +216,7 @@ export function stockAdviceRows(ctx: ExportContext): (string | number)[][] {
     rows.push([
       index + 1,
       summaryRowLabel(rule, { sizeCode: row.sizeCode, gender: row.gender, qty: row.qty, isSpecial: row.isSpecial }),
-      genderLabel(row.gender),
+      genderText(row.gender),
       row.qty,
       `${(row.ratio * 100).toFixed(1)}%`,
       `${Math.round((1 + row.marginRatio) * 100)}%`,

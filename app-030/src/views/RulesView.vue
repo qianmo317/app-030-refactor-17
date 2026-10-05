@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
-import { getRule, projectsUsingRule, saveRule, store } from '../logic/store'
-import { alignToStep } from '../logic/sizeRules'
-import { cmToHalfUnits, formatHalfUnits } from '../logic/precision'
+import { getRule, isRuleInUse, projectsUsingRule, saveRule, store } from '../logic/store'
+import { describeAlign, fitRangeText } from '../logic/sizeRules'
 import type { FitRange, Gender, SizeRule } from '../logic/types'
 
 function cloneRule(rule: SizeRule): SizeRule {
@@ -40,21 +39,15 @@ function rangesOf(gender: Gender): FitRange[] {
 const alignExamples = computed(() => {
   const rule = form.value
   const samples = [167, 167.5, 168, 182, 182.5, 183]
-  return samples.map((cm) => {
-    const height = formatHalfUnits(
-      alignToStep(cmToHalfUnits(cm), cmToHalfUnits(rule.heightAnchor), cmToHalfUnits(rule.heightStepCm), rule.boundaryRule)
-    )
-    const chest = formatHalfUnits(
-      alignToStep(cmToHalfUnits(86), cmToHalfUnits(rule.chestAnchor), cmToHalfUnits(rule.chestStepCm), rule.boundaryRule)
-    )
-    return { cm, height, chest }
-  })
+  return samples.map((cm) => ({
+    cm,
+    height: describeAlign(rule, cm, 'height'),
+    chest: describeAlign(rule, 86, 'chest')
+  }))
 })
 
 function fitText(gender: Gender): string {
-  return rangesOf(gender)
-    .map((range) => `${range.fit} ${range.minCm}~${range.maxCm}`)
-    .join(' ｜ ')
+  return rangesOf(gender).map((range) => fitRangeText(range)).join(' ｜ ')
 }
 
 function validate(): string {
@@ -166,10 +159,10 @@ async function saveAsNew(): Promise<void> {
                   {{ rule.boundaryRule === 'round_up' ? '边界归上' : '就近归下' }}
                 </span>
               </td>
-              <td>{{ (rule.fitByChestWaistDiff.find((g) => g.gender === 'male')?.ranges ?? []).map((r) => `${r.fit} ${r.minCm}~${r.maxCm}`).join(' ') }}</td>
-              <td>{{ (rule.fitByChestWaistDiff.find((g) => g.gender === 'female')?.ranges ?? []).map((r) => `${r.fit} ${r.minCm}~${r.maxCm}`).join(' ') }}</td>
+              <td>{{ (rule.fitByChestWaistDiff.find((g) => g.gender === 'male')?.ranges ?? []).map((r) => fitRangeText(r)).join(' ') }}</td>
+              <td>{{ (rule.fitByChestWaistDiff.find((g) => g.gender === 'female')?.ranges ?? []).map((r) => fitRangeText(r)).join(' ') }}</td>
               <td>
-                <span class="badge" :class="projectsUsingRule(rule.version).length ? 'badge-warn' : ''">
+                <span class="badge" :class="isRuleInUse(rule.version) ? 'badge-warn' : ''">
                   {{ projectsUsingRule(rule.version).length }} 个
                 </span>
               </td>

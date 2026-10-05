@@ -5,7 +5,9 @@ import { ensureMerged, flushProject, getProject, getRule, persistProject, store 
 import { buildSummary, conservationText } from '../logic/merge'
 import { alignToStep, isSizeCodeValid, normalizeSizeCodeInput, specialFlagLabel } from '../logic/sizeRules'
 import { chestWaistDiffCm, cmToHalfUnits, formatCm, formatHalfUnits } from '../logic/precision'
-import type { Person, PersonStatus } from '../logic/types'
+import { summaryRowLabel } from '../logic/exporter'
+import { genderText } from '../logic/display'
+import type { Person, PersonStatus, SummaryRow } from '../logic/types'
 
 const route = useRoute()
 const project = computed(() => getProject(route.params.id as string))
@@ -260,9 +262,7 @@ async function clearDuplicateFlag(person: Person): Promise<void> {
   message.value = `已确认「${person.name}」不是重复行，标记已清除（数据未改动）`
 }
 
-const genderText = (gender: string): string => (gender === 'male' ? '男' : '女')
-const rowLabel = (sizeCode: string, isSpecial: boolean): string =>
-  isSpecial ? `${specialFlagLabel(rule.value, sizeCode)}（${sizeCode}）` : sizeCode
+const rowLabel = (row: SummaryRow): string => summaryRowLabel(rule.value, row)
 </script>
 
 <template>
@@ -535,7 +535,7 @@ const rowLabel = (sizeCode: string, isSpecial: boolean): string =>
           <tbody>
             <template v-for="row in summary.allRows" :key="`${row.isSpecial}-${row.sizeCode}-${row.gender}`">
               <tr>
-                <td><b>{{ rowLabel(row.sizeCode, row.isSpecial) }}</b></td>
+                <td><b>{{ rowLabel(row) }}</b></td>
                 <td>{{ genderText(row.gender) }}</td>
                 <td>
                   <span class="badge" :class="row.isSpecial ? 'badge-warn' : 'badge-info'">

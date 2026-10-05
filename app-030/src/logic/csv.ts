@@ -112,14 +112,6 @@ export function downloadText(text: string, fileName: string, mime = 'text/csv;ch
   downloadBlob(new Blob([text], { type: mime }), fileName)
 }
 
-export function todayStamp(): string {
-  const now = new Date()
-  const pad = (value: number) => String(value).padStart(2, '0')
-  return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(
-    now.getMinutes()
-  )}`
-}
-
 export function readFileAsText(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()

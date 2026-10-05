@@ -5,7 +5,7 @@ import { ensureMerged, getProject, getRule, store } from '../logic/store'
 import { buildSummary, conservationText } from '../logic/merge'
 import { exportBaseName, stockAdviceRows, summaryRowLabel } from '../logic/exporter'
 import { downloadText, toCsvText } from '../logic/csv'
-import type { Gender } from '../logic/types'
+import { genderText } from '../logic/display'
 
 const route = useRoute()
 const project = computed(() => getProject(route.params.id as string))
@@ -25,8 +25,6 @@ function toggleUnit(orgUnit: string): void {
     expandedUnits.value = [...expandedUnits.value, orgUnit]
   }
 }
-
-const genderText = (gender: Gender | string): string => (gender === 'male' ? '男' : '女')
 
 const totalQty = computed(() => summary.value?.totals.accountedQty ?? 0)
 

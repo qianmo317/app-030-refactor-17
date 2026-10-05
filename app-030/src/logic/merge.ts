@@ -5,6 +5,7 @@
 import type { Gender, Person, Project, SizeRule, SummaryRow } from './types'
 import { buildSizeCode } from './sizeRules'
 import { anomalyText } from './analyze'
+import { compareChineseName, compareDistribution, compareSummaryRows, stableSorted } from './sort'
 
 export type MergeResult = { durationMs: number }
 
@@ -119,29 +120,6 @@ export type Summary = {
   distribution: DistributionRow[]
 }
 
-function parseCode(code: string): { height: number; chest: number; fit: number } | null {
-  const matched = /^(\d+(?:\.5)?)\/(\d+(?:\.5)?)([YABC])$/.exec(code)
-  if (!matched) return null
-  const fitOrder = ['Y', 'A', 'B', 'C']
-  return {
-    height: Number(matched[1]),
-    chest: Number(matched[2]),
-    fit: fitOrder.indexOf(matched[3])
-  }
-}
-
-/** 同一号型的行号规则：男装在前，再按号 / 型 / 型别排序，特殊档排最后 */
-function compareRows(a: SummaryRow, b: SummaryRow): number {
-  if (a.isSpecial !== b.isSpecial) return a.isSpecial ? 1 : -1
-  if (a.gender !== b.gender) return a.gender === 'male' ? -1 : 1
-  const pa = parseCode(a.sizeCode)
-  const pb = parseCode(b.sizeCode)
-  if (!pa || !pb) return a.sizeCode.localeCompare(b.sizeCode)
-  if (pa.height !== pb.height) return pa.height - pb.height
-  if (pa.chest !== pb.chest) return pa.chest - pb.chest
-  return pa.fit - pb.fit
-}
-
 function accumulate(
   map: Map<string, SummaryRow>,
   sizeCode: string,
@@ -155,7 +133,7 @@ function accumulate(
 }
 
 function groupRows(rows: SummaryRow[]): SummaryRow[] {
-  return [...rows].sort(compareRows)
+  return stableSorted(rows, compareSummaryRows)
 }
 
 /** 汇总 + 守恒校验。调用前请先 runMerge（结果幂等） */
@@ -243,7 +221,7 @@ export function buildSummary(project: Project, rule: SizeRule): Summary {
         rows
       }
     })
-    .sort((a, b) => a.orgUnit.localeCompare(b.orgUnit, 'zh-Hans-CN'))
+    .sort((a, b) => compareChineseName(a.orgUnit, b.orgUnit))
 
   const byBatch: BatchGroup[] = [...batchMap.entries()]
     .map(([batch, group]) => {
@@ -257,22 +235,20 @@ export function buildSummary(project: Project, rule: SizeRule): Summary {
         rows
       }
     })
-    .sort((a, b) => a.batch.localeCompare(b.batch, 'zh-Hans-CN'))
+    .sort((a, b) => compareChineseName(a.batch, b.batch))
 
-  const distribution: DistributionRow[] = [...allRows]
-    .sort((a, b) => b.qty - a.qty || compareRows(a, b))
-    .map((row) => {
-      const marginRatio = row.isSpecial ? 0.1 : 0.05
-      return {
-        sizeCode: row.sizeCode,
-        gender: row.gender,
-        qty: row.qty,
-        isSpecial: row.isSpecial,
-        ratio: accountedQty > 0 ? row.qty / accountedQty : 0,
-        marginRatio,
-        suggestion: Math.max(1, Math.ceil(row.qty * (1 + marginRatio)))
-      }
-    })
+  const distribution: DistributionRow[] = stableSorted(allRows, compareDistribution).map((row) => {
+    const marginRatio = row.isSpecial ? 0.1 : 0.05
+    return {
+      sizeCode: row.sizeCode,
+      gender: row.gender,
+      qty: row.qty,
+      isSpecial: row.isSpecial,
+      ratio: accountedQty > 0 ? row.qty / accountedQty : 0,
+      marginRatio,
+      suggestion: Math.max(1, Math.ceil(row.qty * (1 + marginRatio)))
+    }
+  })
 
   return {
     ruleVersion: rule.version,

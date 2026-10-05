@@ -8,6 +8,7 @@ import { formatCm, parseLengthCm, parseWeightKg } from '../logic/precision'
 import { downloadText, toCsvText } from '../logic/csv'
 import { runMerge } from '../logic/merge'
 import { detailRows } from '../logic/exporter'
+import { genderText } from '../logic/display'
 import type { Gender, Person } from '../logic/types'
 
 const route = useRoute()
@@ -207,10 +208,6 @@ async function exportFallbackCsv(): Promise<void> {
 
 function focusHeight(): void {
   heightRef.value?.focus()
-}
-
-function genderText(gender: Gender): string {
-  return gender === 'male' ? '男' : '女'
 }
 </script>
 
